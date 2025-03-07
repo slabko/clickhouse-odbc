@@ -1183,6 +1183,13 @@ SQLRETURN SQL_API EXPORTED_FUNCTION_MAYBE_W(SQLGetTypeInfo)(
             add_query_for_type("DateTime", info);
         }
 
+        // TODO (slabko): From ODBC documentation for SQLGetTypeInfo:
+        // "SQLGetTypeInfo returns the results as a standard result set,
+        // ordered by DATA_TYPE **and then by how closely the data type maps
+        // to the corresponding ODBC SQL data type**. Data types defined
+        // by the data source take precedence over user-defined data types."
+        // This, however, does not order by how closely the data type maps
+        // to the data type passed as parameter to SQLGetTypeInfo.
         query << ") ORDER BY DATA_TYPE";
 
         if (first)
