@@ -1028,24 +1028,24 @@ SQLRETURN SQL_API EXPORTED_FUNCTION_MAYBE_W(SQLColumns)(
 
         std::stringstream query;
         query << "SELECT"
-                 " database AS TABLE_CAT"   // 0
-                 ", '' AS TABLE_SCHEM"      // 1
-                 ", table AS TABLE_NAME"    // 2
-                 ", name AS COLUMN_NAME"    // 3
-                 ", 0 AS DATA_TYPE"         // 4
-                 ", type AS TYPE_NAME"      // 5
-                 ", 0 AS COLUMN_SIZE"       // 6
-                 ", 0 AS BUFFER_LENGTH"     // 7
-                 ", 0 AS DECIMAL_DIGITS"    // 8
-                 ", 0 AS NUM_PREC_RADIX"    // 9
-                 ", 0 AS NULLABLE"          // 10
-                 ", 0 AS REMARKS"           // 11
-                 ", 0 AS COLUMN_DEF"        // 12
-                 ", 0 AS SQL_DATA_TYPE"     // 13
-                 ", 0 AS SQL_DATETIME_SUB"  // 14
-                 ", 0 AS CHAR_OCTET_LENGTH" // 15
-                 ", 0 AS ORDINAL_POSITION"  // 16
-                 ", 0 AS IS_NULLABLE"       // 17
+                 " toNullable(database) AS TABLE_CAT,"               // 0
+                 " toNullable('') AS TABLE_SCHEM,"                   // 1
+                 " table AS TABLE_NAME,"                             // 2
+                 " name AS COLUMN_NAME,"                             // 3
+                 " toInt16(0) AS DATA_TYPE,"                         // 4
+                 " type AS TYPE_NAME,"                               // 5
+                 " toNullable(toInt32(0)) AS COLUMN_SIZE,"           // 6
+                 " toNullable(toInt32(0)) AS BUFFER_LENGTH,"         // 7
+                 " toNullable(toInt16(0)) AS DECIMAL_DIGITS,"        // 8
+                 " toNullable(toInt16(0)) AS NUM_PREC_RADIX,"        // 9
+                 " toInt16(0) AS NULLABLE,"                          // 10
+                 " toNullable('') AS REMARKS,"                       // 11
+                 " toNullable('') AS COLUMN_DEF,"                    // 12
+                 " toInt16(0) AS SQL_DATA_TYPE,"                     // 13
+                 " toNullable(toInt16(0)) AS SQL_DATETIME_SUB,"      // 14
+                 " toNullable(toInt32(0)) AS CHAR_OCTET_LENGTH,"     // 15
+                 " toInt32(0) AS ORDINAL_POSITION,"                  // 16
+                 " toNullable('') AS IS_NULLABLE"                    // 17
                  " FROM system.columns"
                  " WHERE (1 == 1)";
 

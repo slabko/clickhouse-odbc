@@ -398,3 +398,73 @@ TEST_F(MiscellaneousTest, ClickhouseToSQLTypeMapping)
         ASSERT_EQ(sql_types[name], data_type) << "type: " << name;
     }
 }
+
+// Checks that the SQLColumns function returns a dataset
+// with column types as specified in the ODBC documentation.
+TEST_F(MiscellaneousTest, SQLGetTypeInfoMapping)
+{
+    struct SQLGetDataTypeInfoTestEntry
+    {
+        std::string_view column_name;
+        SQLSMALLINT sql_type;
+        SQLSMALLINT nullable;
+    };
+
+    // The types are taken from the SQLColumns documentation
+    // https://learn.microsoft.com/en-us/sql/odbc/reference/syntax/sqlcolumns-function
+    std::vector<SQLGetDataTypeInfoTestEntry> expected_columns = {
+        {"TABLE_CAT", SQL_VARCHAR, true},
+        {"TABLE_SCHEM", SQL_VARCHAR, true},
+        {"TABLE_NAME", SQL_VARCHAR, false},
+        {"COLUMN_NAME", SQL_VARCHAR, false},
+        {"DATA_TYPE", SQL_SMALLINT, false},
+        {"TYPE_NAME", SQL_VARCHAR, false},
+        {"COLUMN_SIZE", SQL_INTEGER, true},
+        {"BUFFER_LENGTH", SQL_INTEGER, true},
+        {"DECIMAL_DIGITS", SQL_SMALLINT, true},
+        {"NUM_PREC_RADIX", SQL_SMALLINT, true},
+        {"NULLABLE", SQL_SMALLINT, false},
+        {"REMARKS", SQL_VARCHAR, true},
+        {"COLUMN_DEF", SQL_VARCHAR, true},
+        {"SQL_DATA_TYPE", SQL_SMALLINT, false},
+        {"SQL_DATETIME_SUB", SQL_SMALLINT, true},
+        {"CHAR_OCTET_LENGTH", SQL_INTEGER, true},
+        {"ORDINAL_POSITION", SQL_INTEGER, false},
+        {"IS_NULLABLE", SQL_VARCHAR, true},
+    };
+
+    auto catalog_name = fromUTF8<SQLTCHAR>("system");
+    auto table_name = fromUTF8<SQLTCHAR>("databases");
+
+    ODBC_CALL_ON_STMT_THROW(hstmt, SQLColumns(
+        hstmt,
+        catalog_name.data(), catalog_name.size(),
+        (SQLTCHAR*)"", 0,
+        table_name.data(), table_name.size(),
+        nullptr, 0));
+
+	SQLSMALLINT num_columns{};
+	ODBC_CALL_ON_STMT_THROW(hstmt, SQLNumResultCols(hstmt, &num_columns));
+
+    SQLSMALLINT name_length = 0;
+    SQLSMALLINT data_type = 0;
+    SQLSMALLINT nullable = 0;
+
+    std::basic_string<SQLTCHAR> input_name(256, '\0');
+    for (SQLSMALLINT column = 1; column <= num_columns; ++column) {
+        ODBC_CALL_ON_STMT_THROW(hstmt, SQLDescribeCol(
+            hstmt,
+            column,
+            input_name.data(),
+            static_cast<SQLSMALLINT>(input_name.size()),
+            &name_length,
+            &data_type,
+            nullptr,
+            nullptr,
+            &nullable));
+        std::string name(input_name.begin(), input_name.begin() + name_length);
+        ASSERT_EQ(name, expected_columns[column-1].column_name);
+        ASSERT_EQ(data_type, expected_columns[column-1].sql_type) << "column " << name;
+        ASSERT_EQ(nullable, expected_columns[column-1].nullable) << "column " << name;
+    }
+}
