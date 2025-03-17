@@ -1114,7 +1114,7 @@ SQLRETURN SQL_API EXPORTED_FUNCTION_MAYBE_W(SQLGetTypeInfo)(
 
         bool first = true;
 
-        auto add_query_for_type = [&](const std::string & name, const TypeInfo & info) mutable {
+        auto add_query_for_type = [&](std::string_view name, const TypeInfo & info) mutable {
             if (type != SQL_ALL_TYPES && type != info.sql_type)
                 return;
 
@@ -1122,48 +1122,43 @@ SQLRETURN SQL_API EXPORTED_FUNCTION_MAYBE_W(SQLGetTypeInfo)(
                 query << " UNION ALL ";
             first = false;
 
+            std::string radix = "NULL";
+            if (info.isFixedPrecisionType() && info.isIntegerType()) {
+                radix = "10";
+            }
+            if (info.isFloatingPointType()) {
+                radix = "2";
+            }
+
+            std::string literal_prefix_suffix = "NULL";
+            if (info.isBufferType()) {
+                literal_prefix_suffix = "'''";
+            }
+
             query << "SELECT"
-                     " '"
-                  << info.type_name
-                  << "' AS TYPE_NAME"
-                     ", toInt16("
-                  << info.sql_type
-                  << ") AS DATA_TYPE"
-                     ", toInt32("
-                  << info.column_size
-                  << ") AS COLUMN_SIZE"
-                     ", '' AS LITERAL_PREFIX"
-                     ", '' AS LITERAL_SUFFIX"
+                     " '" << info.type_name << "' AS TYPE_NAME"
+                     ", toInt16(" << info.sql_type << ") AS DATA_TYPE"
+                     ", toInt32(" << info.column_size << ") AS COLUMN_SIZE"
+                     ", '" << literal_prefix_suffix << "' AS LITERAL_PREFIX"
+                     ", '" << literal_prefix_suffix << "' AS LITERAL_SUFFIX"
                      ", '' AS CREATE_PARAMS" /// TODO
-                     ", toInt16("
-                  << SQL_NO_NULLS
-                  << ") AS NULLABLE"
-                     ", toInt16("
-                  << SQL_TRUE
-                  << ") AS CASE_SENSITIVE"
-                     ", toInt16("
-                  << SQL_SEARCHABLE
-                  << ") AS SEARCHABLE"
-                     ", toInt16("
-                  << info.is_unsigned
-                  << ") AS UNSIGNED_ATTRIBUTE"
-                     ", toInt16("
-                  << SQL_FALSE
-                  << ") AS FIXED_PREC_SCALE"
-                     ", toInt16("
-                  << SQL_FALSE
-                  << ") AS AUTO_UNIQUE_VALUE"
+                     ", toInt16(" << SQL_NO_NULLS << ") AS NULLABLE"
+                     ", toInt16(" << SQL_TRUE << ") AS CASE_SENSITIVE"
+                     ", toInt16(" << SQL_SEARCHABLE << ") AS SEARCHABLE"
+                     ", toInt16(" << info.is_unsigned << ") AS UNSIGNED_ATTRIBUTE"
+                     ", toInt16(" << SQL_FALSE << ") AS FIXED_PREC_SCALE"
+                     ", toInt16(" << SQL_FALSE << ") AS AUTO_UNIQUE_VALUE"
                      ", TYPE_NAME AS LOCAL_TYPE_NAME"
                      ", toInt16(0) AS MINIMUM_SCALE"
-                     ", toInt16(0) AS MAXIMUM_SCALE"
+                     ", toInt16(0) AS MAXIMUM_SCALE" // Set for decimal
                      ", DATA_TYPE AS SQL_DATA_TYPE"
-                     ", toInt16(0) AS SQL_DATETIME_SUB"
-                     ", toInt32(10) AS NUM_PREC_RADIX" /// TODO
+                  << ", toInt16(0) AS SQL_DATETIME_SUB"
+                     ", toNullable(toInt32(" << radix << ")) AS NUM_PREC_RADIX"
                      ", toInt16(0) AS INTERVAL_PRECISION";
         };
 
-        for (const auto & name_info : types_g) {
-            add_query_for_type(name_info.first, name_info.second);
+        for (auto name_info : TypeInfoCatalog::Types) {
+            add_query_for_type(name_info.type_name, name_info);
         }
 
         // TODO (artpaul) check current version of ODBC.
