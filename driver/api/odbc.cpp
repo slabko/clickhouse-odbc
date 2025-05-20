@@ -12,6 +12,7 @@
 #include "driver/descriptor.h"
 #include "driver/statement.h"
 #include "driver/result_set.h"
+#include "driver/utils/system_queries.h"
 
 #include <Poco/Net/HTTPClientSession.h>
 #include <Poco/NumberFormatter.h>
@@ -109,6 +110,9 @@ SQLRETURN SQL_API EXPORTED_FUNCTION_MAYBE_W(SQLGetInfo)(
       * But in most cases, the possibilities are declared "in reserve" to see,
       * what requests will be sent and what any software will do, meaning these features.
       */
+
+    if (info_type == SQL_DBMS_VER)
+        return getServerVersion(connection_handle, out_value, out_value_max_length, out_value_length);
 
     auto func = [&](Connection & connection) -> SQLRETURN {
         const char * name = nullptr;

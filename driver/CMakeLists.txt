@@ -56,6 +56,7 @@ add_library (${libname}-impl STATIC
     utils/type_info.cpp
     utils/unicode_converter.cpp
     utils/conversion_context.cpp
+    utils/system_queries.cpp
 
     config/config.cpp
 
@@ -95,6 +96,7 @@ add_library (${libname}-impl STATIC
     utils/conversion_icu.h
     utils/type_parser.h
     utils/type_info.h
+    utils/system_queries.h
 
     config/config.h
     config/ini_defines.h
