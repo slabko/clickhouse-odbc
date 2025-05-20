@@ -4,7 +4,14 @@
 
 // This function is useful when we want to propagate the diagnostics from
 // an ephemeral container, for example a statement created for just one query
-// to another container.
+/**
+ * @brief Copies all diagnostic records from one diagnostics container to another.
+ *
+ * Transfers each diagnostic record from the source container to the destination container in reverse order.
+ *
+ * @param from Source diagnostics container.
+ * @param to Destination diagnostics container.
+ */
 void copyDiagnosticsRecords(DiagnosticsContainer * from, DiagnosticsContainer * to)
 {
     auto count = from->getDiagStatusCount();
@@ -15,6 +22,16 @@ void copyDiagnosticsRecords(DiagnosticsContainer * from, DiagnosticsContainer * 
     }
 }
 
+/**
+ * @brief Retrieves the server version string from a database connection.
+ *
+ * Executes the SQL query `select version()` on the provided connection handle, stores the resulting version string in the supplied buffer, and sets the length of the string. Handles errors by propagating diagnostic records and may throw an exception if the version string retrieval fails.
+ *
+ * @param buffer_ptr Pointer to the buffer where the server version string will be stored.
+ * @param buffer_len Length of the buffer in characters.
+ * @param string_length_ptr Pointer to a variable that receives the length of the version string.
+ * @return SQLRETURN Status code indicating the result of the operation.
+ */
 SQLRETURN getServerVersion(
      SQLHDBC         hdbc,
      SQLPOINTER      buffer_ptr,

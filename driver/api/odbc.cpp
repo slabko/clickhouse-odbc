@@ -96,6 +96,18 @@ SQLRETURN SQL_API EXPORTED_FUNCTION(SQLFreeStmt)(HSTMT statement_handle, SQLUSMA
     });
 }
 
+/**
+ * @brief Retrieves information about the driver or data source.
+ *
+ * Returns driver, data source, or DBMS-specific information based on the requested info type. For `SQL_DBMS_VER`, returns the server version. For other info types, provides details such as driver version, supported features, limits, and capabilities. Throws a runtime error if the info type is unsupported.
+ *
+ * @param connection_handle ODBC connection handle.
+ * @param info_type The type of information requested (e.g., driver version, supported functions).
+ * @param out_value Output buffer for the returned information.
+ * @param out_value_max_length Maximum length of the output buffer.
+ * @param out_value_length Pointer to the length of the returned information.
+ * @return SQLRETURN SQL_SUCCESS on success, SQL_ERROR on failure, or throws on unsupported info type.
+ */
 SQLRETURN SQL_API EXPORTED_FUNCTION_MAYBE_W(SQLGetInfo)(
     SQLHDBC         connection_handle,
     SQLUSMALLINT    info_type,

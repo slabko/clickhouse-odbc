@@ -10,6 +10,11 @@ class MiscellaneousTest
 {
 };
 
+/**
+ * @brief Verifies that the database version reported by SQLGetInfo matches the version returned by a SQL query.
+ *
+ * Retrieves the database version string using SQLGetInfo with SQL_DBMS_VER and by executing the SQL query `select version()`, then asserts that both methods return the same version string.
+ */
 TEST_F(MiscellaneousTest, GetDatabaseVersion) {
     SQLRETURN res = SQL_SUCCESS;
     std::basic_string<SQLTCHAR> param_version(256, '\0');
@@ -43,6 +48,12 @@ TEST_F(MiscellaneousTest, GetDatabaseVersion) {
     ASSERT_EQ(param_version, query_version);
 }
 
+/**
+ * @brief Tests getting and setting the SQL_ATTR_ROW_ARRAY_SIZE statement attribute.
+ *
+ * Verifies that the default row array size is 1, that it can be changed to other values using SQLSetStmtAttr,
+ * and that subsequent calls to SQLGetStmtAttr reflect the updated value.
+ */
 TEST_F(MiscellaneousTest, RowArraySizeAttribute) {
     SQLRETURN rc = SQL_SUCCESS;
     SQLULEN size = 0;

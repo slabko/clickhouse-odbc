@@ -95,12 +95,22 @@ class TestSanity:
         assert list(result[0]) == PYODBC_ROW2
 
     def test_uint8_string_and_date_params(self, conn):
+        """
+        Tests retrieval of a row using UInt8, String, and Date parameters in a parameterized query.
+        
+        Executes a SELECT statement filtering by integer, string, and date columns, and asserts that the returned row matches the expected values for these parameters.
+        """
         result = conn.query(f"SELECT * FROM {TABLE_NAME} WHERE i = ? and s = ? and d = ? ORDER BY i, s, d",
                             [2, "test", datetime.date(2019, 5, 25)])
         assert len(result) == 1
         assert list(result[0]) == PYODBC_ROW2
 
     def test_dbms_version(self, conn):
+        """
+        Verifies that the DBMS version from the connection info matches the version returned by SQL.
+        
+        Asserts that the version string obtained via pyodbc's connection metadata is identical to the result of the SQL query `SELECT version()`.
+        """
         param_version = conn.connection.getinfo(pyodbc.SQL_DBMS_VER)
 
         result = conn.query(f"SELECT version()");
