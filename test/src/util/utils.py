@@ -102,11 +102,19 @@ def pyodbc_connection(encoding="utf-8", logs=None):
 
 @contextmanager
 def create_table(connection: PyODBCConnection, table_name: str, schema: str):
-    ddl = f"CREATE OR REPLACE TABLE {table_name} ({schema}) ENGINE = Memory"
-    connection.query(ddl, fetch=False)
-    yield
-    # No need to drop the table locally, might be useful for debugging
-    # connection.query(f"DROP TABLE IF EXISTS {table_name}", fetch=False)
+    try:
+        # The table can exist due to the crash or cancellation of
+        # the previous test run. `CREATE OR REPLACE TABLE` would perfectly
+        # here but does not work in WSL and MacOS,
+        # see https://github.com/ClickHouse/ClickHouse/issues/49339
+        # `DROP TABLE IF EXISTS` and `CREATE TABLE` is used here
+        # to simulate `CREATE OR REPLACE TABLE`
+        connection.query(f"DROP TABLE IF EXISTS {table_name}", fetch=False)
+        ddl = f"CREATE TABLE {table_name} ({schema}) ENGINE = Memory"
+        connection.query(ddl, fetch=False)
+        yield
+    finally:
+        connection.query(f"DROP TABLE IF EXISTS {table_name}", fetch=False)
 
 
 def rows_as_values(rows: list[pyodbc.Row]) -> list:
