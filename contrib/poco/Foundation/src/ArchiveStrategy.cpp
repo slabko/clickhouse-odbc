@@ -161,35 +161,51 @@ ArchiveByNumberStrategy::~ArchiveByNumberStrategy()
 }
 
 
-LogFile* ArchiveByNumberStrategy::archive(LogFile* pFile)
+LogFile* ArchiveByNumberStrategy::archive(LogFile* pFile, bool streamCompress)
 {
-	std::string basePath = pFile->path();
+	std::string base = pFile->path();
+	std::string ext = "";
+
+	if (base.ends_with(".lz4"))
+	{
+		base.resize(base.size() - 4);
+		ext = ".lz4";
+	}
+
 	delete pFile;
 	int n = -1;
 	std::string path;
 	do
 	{
-		path = basePath;
+		path = base;
 		path.append(".");
 		NumberFormatter::append(path, ++n);
+		path.append(ext);
 	}
 	while (exists(path));
 	
 	while (n >= 0)
 	{
-		std::string oldPath = basePath;
+		std::string oldPath = base;
 		if (n > 0)
 		{
 			oldPath.append(".");
 			NumberFormatter::append(oldPath, n - 1);
 		}
-		std::string newPath = basePath;
+		oldPath.append(ext);
+
+		std::string newPath = base;
 		newPath.append(".");
 		NumberFormatter::append(newPath, n);
+		newPath.append(ext);
 		moveFile(oldPath, newPath);
 		--n;
 	}
-	return new LogFile(basePath);
+
+	if (streamCompress)
+		return new CompressedLogFile(base);
+	else
+		return new LogFile(base);
 }
 
 

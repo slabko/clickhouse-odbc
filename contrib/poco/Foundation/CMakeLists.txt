@@ -1,32 +1,34 @@
+# Foundation (pcre)
+
 file (GLOB SRCS_PCRE src/pcre_*.c)
 
 add_library (_poco_foundation_pcre ${SRCS_PCRE})
 add_library (Poco::Foundation::PCRE ALIAS _poco_foundation_pcre)
 
 # TODO: remove these warning exclusions
-if (NOT MSVC)
-    target_compile_options (_poco_foundation_pcre
-        PRIVATE
-            -Wno-cast-align
-            -Wno-cast-qual
-            -Wno-comma
-            -Wno-conditional-uninitialized
-            -Wno-extra-semi-stmt
-            -Wno-implicit-fallthrough
-            -Wno-reserved-identifier
-            -Wno-sign-compare
-            -Wno-unknown-pragmas
-            -Wno-unreachable-code-break
-            -Wno-unused-macros
-    )
-endif()
+target_compile_options (_poco_foundation_pcre
+    PRIVATE
+        -Wno-cast-align
+        -Wno-cast-qual
+        -Wno-comma
+        -Wno-conditional-uninitialized
+        -Wno-extra-semi-stmt
+        -Wno-implicit-fallthrough
+        -Wno-reserved-identifier
+        -Wno-sign-compare
+        -Wno-unknown-pragmas
+        -Wno-unreachable-code-break
+        -Wno-unused-macros
+)
 
-set(SRCS 
-    src/ASCIIEncoding.cpp
+# Foundation
+
+set (SRCS
     src/AbstractObserver.cpp
     src/ActiveDispatcher.cpp
     src/ArchiveStrategy.cpp
     src/Ascii.cpp
+    src/ASCIIEncoding.cpp
     src/AsyncChannel.cpp
     src/AtomicCounter.cpp
     src/Base64Decoder.cpp
@@ -38,6 +40,7 @@ set(SRCS
     src/Channel.cpp
     src/Checksum.cpp
     src/Clock.cpp
+    src/CompressedLogFile.cpp
     src/Condition.cpp
     src/Configurable.cpp
     src/ConsoleChannel.cpp
@@ -52,17 +55,14 @@ set(SRCS
     src/DigestStream.cpp
     src/DirectoryIterator.cpp
     src/DirectoryIteratorStrategy.cpp
-    src/DirectoryWatcher.cpp
     src/Environment.cpp
     src/Error.cpp
     src/ErrorHandler.cpp
     src/Event.cpp
     src/EventArgs.cpp
     src/EventChannel.cpp
-    src/EventLogChannel.cpp
     src/Exception.cpp
     src/FIFOBufferStream.cpp
-    src/FPEnvironment.cpp
     src/File.cpp
     src/FileChannel.cpp
     src/FileStream.cpp
@@ -70,6 +70,7 @@ set(SRCS
     src/Format.cpp
     src/Formatter.cpp
     src/FormattingChannel.cpp
+    src/FPEnvironment.cpp
     src/Glob.cpp
     src/Hash.cpp
     src/HashStatistic.cpp
@@ -77,20 +78,14 @@ set(SRCS
     src/HexBinaryEncoder.cpp
     src/InflatingStream.cpp
     src/JSONString.cpp
-    src/Latin1Encoding.cpp
-    src/Latin2Encoding.cpp
-    src/Latin9Encoding.cpp
     src/LineEndingConverter.cpp
     src/LocalDateTime.cpp
     src/LogFile.cpp
-    src/LogStream.cpp
     src/Logger.cpp
     src/LoggingFactory.cpp
     src/LoggingRegistry.cpp
-    src/MD4Engine.cpp
+    src/LogStream.cpp
     src/MD5Engine.cpp
-    src/Manifest.cpp
-    src/MemoryPool.cpp
     src/MemoryStream.cpp
     src/Message.cpp
     src/Mutex.cpp
@@ -109,34 +104,31 @@ set(SRCS
     src/PatternFormatter.cpp
     src/Pipe.cpp
     src/PipeImpl.cpp
-    src/PipeStream.cpp
     src/PriorityNotificationQueue.cpp
     src/Process.cpp
     src/PurgeStrategy.cpp
-    src/RWLock.cpp
     src/Random.cpp
     src/RandomStream.cpp
     src/RefCountedObject.cpp
     src/RegularExpression.cpp
     src/RotateStrategy.cpp
     src/Runnable.cpp
-    src/SHA1Engine.cpp
+    src/RWLock.cpp
     src/Semaphore.cpp
+    src/SHA1Engine.cpp
     src/SharedLibrary.cpp
     src/SharedMemory.cpp
     src/SignalHandler.cpp
     src/SimpleFileChannel.cpp
     src/SortedDirectoryIterator.cpp
     src/SplitterChannel.cpp
-    src/SyslogChannel.cpp
     src/Stopwatch.cpp
     src/StreamChannel.cpp
     src/StreamConverter.cpp
     src/StreamCopier.cpp
-    src/StreamTokenizer.cpp
     src/String.cpp
     src/StringTokenizer.cpp
-    src/SynchronizedObject.cpp
+    src/SyslogChannel.cpp
     src/Task.cpp
     src/TaskManager.cpp
     src/TaskNotification.cpp
@@ -150,14 +142,14 @@ set(SRCS
     src/ThreadLocal.cpp
     src/ThreadPool.cpp
     src/ThreadTarget.cpp
-
     src/TimedNotificationQueue.cpp
     src/Timer.cpp
     src/Timespan.cpp
     src/Timestamp.cpp
     src/Timezone.cpp
-
     src/Token.cpp
+    src/Unicode.cpp
+    src/UnicodeConverter.cpp
     src/URI.cpp
     src/URIStreamFactory.cpp
     src/URIStreamOpener.cpp
@@ -167,25 +159,49 @@ set(SRCS
     src/UTF8String.cpp
     src/UUID.cpp
     src/UUIDGenerator.cpp
-    src/Unicode.cpp
-    src/UnicodeConverter.cpp
     src/Var.cpp
     src/VarHolder.cpp
     src/VarIterator.cpp
     src/Void.cpp
-    src/Windows1250Encoding.cpp
-    src/Windows1251Encoding.cpp
-    src/Windows1252Encoding.cpp
-    src/WindowsConsoleChannel.cpp
 )
 
-if(WIN32)
-    set(SYSLIBS ${SYSLIBS} iphlpapi)
-endif(WIN32)
+add_library (_poco_foundation ${SRCS})
+add_library (Poco::Foundation ALIAS _poco_foundation)
 
-add_library(_poco_foundation ${SRCS})
-
-target_include_directories (_poco_foundation SYSTEM PUBLIC "include")
+# TODO: remove these warning exclusions
+target_compile_options (_poco_foundation
+    PRIVATE
+        -Wno-array-bounds
+        -Wno-atomic-implicit-seq-cst
+        -Wno-cast-align
+        -Wno-cast-qual
+        -Wno-class-varargs
+        -Wno-covered-switch-default
+        -Wno-deprecated
+        -Wno-extra-semi-stmt
+        -Wno-implicit-fallthrough
+        -Wno-implicit-int-float-conversion
+        -Wno-misleading-indentation
+        -Wno-missing-noreturn
+        -Wno-old-style-cast
+        -Wno-redundant-parens
+        -Wno-reserved-identifier
+        -Wno-reserved-macro-identifier
+        -Wno-shadow
+        -Wno-shorten-64-to-32
+        -Wno-sign-compare
+        -Wno-suggest-destructor-override
+        -Wno-suggest-override
+        -Wno-tautological-unsigned-zero-compare
+        -Wno-thread-safety-analysis
+        -Wno-thread-safety-negative
+        -Wno-undef
+        -Wno-unreachable-code-return
+        -Wno-unused-exception-parameter
+        -Wno-unused-macros
+        -Wno-unused-parameter
+        -Wno-zero-as-null-pointer-constant
+)
 
 target_compile_definitions (_poco_foundation
     PRIVATE
@@ -193,69 +209,22 @@ target_compile_definitions (_poco_foundation
         POCO_UNBUNDLED_ZLIB
     PUBLIC
         POCO_ENABLE_CPP11
+        POCO_OS_FAMILY_UNIX
 )
 
-if (OS_DARWIN OR OS_LINUX)
-    target_compile_definitions (_poco_foundation PUBLIC POCO_OS_FAMILY_UNIX)
-    if (OS_DARWIN)
-        target_compile_definitions (_poco_foundation PUBLIC POCO_NO_STAT64)
-    endif()
-elseif(OS_WINDOWS)
-    target_compile_definitions (_poco_foundation PUBLIC POCO_OS_FAMILY_WINDOWS Foundation_EXPORTS)
-endif()
-
-if (NOT MSVC)
-    target_compile_options (_poco_foundation
-        PRIVATE
-            -Wno-array-bounds
-            -Wno-atomic-implicit-seq-cst
-            -Wno-cast-align
-            -Wno-cast-qual
-            -Wno-class-varargs
-            -Wno-covered-switch-default
-            -Wno-deprecated
-            -Wno-extra-semi-stmt
-            -Wno-implicit-fallthrough
-            -Wno-implicit-int-float-conversion
-            -Wno-misleading-indentation
-            -Wno-missing-noreturn
-            -Wno-old-style-cast
-            -Wno-redundant-parens
-            -Wno-reserved-identifier
-            -Wno-reserved-macro-identifier
-            -Wno-shadow
-            -Wno-shorten-64-to-32
-            -Wno-sign-compare
-            -Wno-suggest-destructor-override
-            -Wno-suggest-override
-            -Wno-tautological-unsigned-zero-compare
-            -Wno-thread-safety-analysis
-            -Wno-thread-safety-negative
-            -Wno-undef
-            -Wno-unreachable-code-return
-            -Wno-unused-exception-parameter
-            -Wno-unused-macros
-            -Wno-unused-parameter
-            -Wno-zero-as-null-pointer-constant
-    )
-endif()
-
-add_definitions( -DPCRE_STATIC)
+target_include_directories (_poco_foundation SYSTEM PUBLIC "include")
+# target_link_libraries (_poco_foundation PRIVATE clickhouse_common_io)
 
 target_link_libraries (_poco_foundation
     PRIVATE
         Poco::Foundation::PCRE
         ch_contrib::zlib
         ch_contrib::lz4
-        ch_contrib::double_conversion
-        ${SYSLIBS})
+        ch_contrib::double_conversion)
 
-add_library(Poco::Foundation ALIAS _poco_foundation)
-
-target_include_directories(_poco_foundation
-	PUBLIC
-		$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-		$<INSTALL_INTERFACE:include>
-	PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src
-	)
-
+if(OS_DARWIN AND ARCH_AARCH64)
+    target_compile_definitions (_poco_foundation
+        PRIVATE
+            POCO_NO_STAT64
+    )
+endif()

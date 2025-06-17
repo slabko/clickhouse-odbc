@@ -12,8 +12,6 @@
 //
 
 
-#if !defined(POCO_OS_FAMILY_WINDOWS)
-
 #include "Poco/SyslogChannel.h"
 #include "Poco/Message.h"
 #include "Poco/StringTokenizer.h"
@@ -234,6 +232,7 @@ int SyslogChannel::getPrio(const Message& msg)
 {
 	switch (msg.getPriority())
 	{
+	case Message::PRIO_TEST:
 	case Message::PRIO_TRACE:
 	case Message::PRIO_DEBUG:
 		return LOG_DEBUG;
@@ -256,5 +255,3 @@ int SyslogChannel::getPrio(const Message& msg)
 
 
 } // namespace Poco
-
-#endif

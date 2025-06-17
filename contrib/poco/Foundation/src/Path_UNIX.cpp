@@ -19,9 +19,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <sys/types.h>
-#if !defined(POCO_VXWORKS)
 #include <pwd.h>
-#endif
 #include <climits>
 
 
@@ -49,19 +47,18 @@ std::string PathImpl::currentImpl()
 
 std::string PathImpl::homeImpl()
 {
-#if defined(POCO_VXWORKS)
-	if (EnvironmentImpl::hasImpl("HOME"))
-		return EnvironmentImpl::getImpl("HOME");
-	else
-		return "/";
-#else
 	std::string path;
-	struct passwd* pwd = getpwuid(getuid());
+	size_t buf_size = 1024;     // Same as glibc use for getpwuid
+	std::vector<char> buf(buf_size);
+	struct passwd res;
+	struct passwd* pwd = nullptr;
+
+	getpwuid_r(getuid(), &res, buf.data(), buf_size, &pwd);
 	if (pwd)
 		path = pwd->pw_dir;
 	else
 	{
-		pwd = getpwuid(geteuid());
+		getpwuid_r(getuid(), &res, buf.data(), buf_size, &pwd);
 		if (pwd)
 			path = pwd->pw_dir;
 		else
@@ -70,18 +67,14 @@ std::string PathImpl::homeImpl()
 	std::string::size_type n = path.size();
 	if (n > 0 && path[n - 1] != '/') path.append("/");
 	return path;
-#endif
 }
 
 
 std::string PathImpl::configHomeImpl()
 {
-#if defined(POCO_VXWORKS)
-	return PathImpl::homeImpl();
-#else
 	std::string path = PathImpl::homeImpl();
 	std::string::size_type n = path.size();
-	if (n > 0 && path[n - 1] == '/') 
+	if (n > 0 && path[n - 1] == '/')
 #if POCO_OS == POCO_OS_MAC_OS_X
 	  path.append("Library/Preferences/");
 #else
@@ -89,18 +82,14 @@ std::string PathImpl::configHomeImpl()
 #endif
 
 	return path;
-#endif
 }
 
 
 std::string PathImpl::dataHomeImpl()
 {
-#if defined(POCO_VXWORKS)
-	return PathImpl::homeImpl();
-#else
 	std::string path = PathImpl::homeImpl();
 	std::string::size_type n = path.size();
-	if (n > 0 && path[n - 1] == '/') 
+	if (n > 0 && path[n - 1] == '/')
 #if POCO_OS == POCO_OS_MAC_OS_X
 	  path.append("Library/Application Support/");
 #else
@@ -108,18 +97,14 @@ std::string PathImpl::dataHomeImpl()
 #endif
 
 	return path;
-#endif
 }
 
 
 std::string PathImpl::cacheHomeImpl()
 {
-#if defined(POCO_VXWORKS)
-	return PathImpl::tempImpl();
-#else
 	std::string path = PathImpl::homeImpl();
 	std::string::size_type n = path.size();
-	if (n > 0 && path[n - 1] == '/') 
+	if (n > 0 && path[n - 1] == '/')
 #if POCO_OS == POCO_OS_MAC_OS_X
 	  path.append("Library/Caches/");
 #else
@@ -127,18 +112,14 @@ std::string PathImpl::cacheHomeImpl()
 #endif
 
 	return path;
-#endif
 }
 
 
 std::string PathImpl::tempHomeImpl()
 {
-#if defined(POCO_VXWORKS)
-	return PathImpl::tempImpl();
-#else
 	std::string path = PathImpl::homeImpl();
 	std::string::size_type n = path.size();
-	if (n > 0 && path[n - 1] == '/') 
+	if (n > 0 && path[n - 1] == '/')
 #if POCO_OS == POCO_OS_MAC_OS_X
 	  path.append("Library/Caches/");
 #else
@@ -146,7 +127,6 @@ std::string PathImpl::tempHomeImpl()
 #endif
 
 	return path;
-#endif
 }
 
 
@@ -171,7 +151,7 @@ std::string PathImpl::tempImpl()
 std::string PathImpl::configImpl()
 {
 	std::string path;
-	
+
 #if POCO_OS == POCO_OS_MAC_OS_X
 	  path = "/Library/Preferences/";
 #else
@@ -183,11 +163,7 @@ std::string PathImpl::configImpl()
 
 std::string PathImpl::nullImpl()
 {
-#if defined(POCO_VXWORKS)
-	return "/null";
-#else
 	return "/dev/null";
-#endif
 }
 
 

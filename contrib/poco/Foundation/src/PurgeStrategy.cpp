@@ -48,7 +48,8 @@ void PurgeStrategy::list(const std::string& path, std::vector<File>& files)
 	DirectoryIterator end;
 	while (it != end)
 	{
-		if (it.name().compare(0, baseName.size(), baseName) == 0)
+		if (it.name().compare(0, baseName.size(), baseName) == 0
+			&& it.name().find(".incomplete") == std::string::npos)
 		{
 			files.push_back(*it);
 		}
@@ -126,6 +127,28 @@ void PurgeByCountStrategy::purge(const std::string& path)
 		files.erase(purgeIt);
 	}
 }
+
+
+void PurgeOneFileStrategy::purge(const std::string& path)
+{
+	std::vector<File> files;
+	list(path, files);
+
+    if (files.empty())
+    {
+        File(path).setSize(0);
+        return;
+    }
+
+    auto purge_it = files.begin();
+    auto it = files.begin();
+    for (++it; it != files.end(); ++it)
+        if (it->getLastModified() < purge_it->getLastModified())
+            purge_it = it;
+
+	purge_it->remove();
+}
+
 
 
 } // namespace Poco

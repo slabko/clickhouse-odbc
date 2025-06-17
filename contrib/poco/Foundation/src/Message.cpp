@@ -13,10 +13,7 @@
 
 
 #include "Poco/Message.h"
-#include "Poco/Exception.h"
-#if !defined(POCO_VXWORKS)
 #include "Poco/Process.h"
-#endif
 #include "Poco/Thread.h"
 #include <algorithm>
 
@@ -24,45 +21,66 @@
 namespace Poco {
 
 
-Message::Message(): 
-	_prio(PRIO_FATAL), 
-	_tid(0), 
-	_pid(0),
-	_file(0),
-	_line(0),
-	_pMap(0) 
+Message::Message()
+    : _prio(PRIO_FATAL)
+    , _tid(0)
+    , _line(0)
 {
 	init();
 }
 
 
-Message::Message(const std::string& source, const std::string& text, Priority prio): 
-	_source(source), 
-	_text(text), 
-	_prio(prio), 
-	_tid(0),
-	_pid(0),
-	_file(0),
-	_line(0),
-	_pMap(0) 
+Message::Message(const std::string & source, const std::string & text, Priority prio)
+    : _source(source)
+    , _text(text)
+    , _prio(prio)
+    , _tid(0)
+    , _line(0)
 {
 	init();
 }
 
 
-Message::Message(const std::string& source, const std::string& text, Priority prio, const char* file, int line):
-	_source(source), 
-	_text(text), 
-	_prio(prio), 
-	_tid(0),
-	_pid(0),
-	_file(file),
-	_line(line),
-	_pMap(0) 
+Message::Message(
+    const std::string & source,
+    const std::string & text,
+    Priority prio,
+    std::string && file,
+    int line,
+    std::string_view fmt_str,
+    const std::vector<std::string> & fmt_str_args)
+    : _source(source)
+    , _text(text)
+    , _prio(prio)
+    , _tid(0)
+    , _file(file)
+    , _line(line)
+    , _fmt_str(fmt_str)
+    , _fmt_str_args(fmt_str_args)
 {
 	init();
 }
 
+
+Message::Message(
+    std::string && source,
+    std::string && text,
+    Priority prio,
+    std::string && file,
+    int line,
+    std::string_view fmt_str,
+    std::vector<std::string> && fmt_str_args)
+    : _source(std::move(source))
+    , _text(std::move(text))
+    , _prio(prio)
+    , _tid(0)
+    , _file(file)
+    , _line(line)
+    , _fmt_str(fmt_str)
+    , _fmt_str_args(std::move(fmt_str_args))
+{
+    init();
+}
 
 Message::Message(const Message& msg):
 	_source(msg._source),
@@ -73,12 +91,10 @@ Message::Message(const Message& msg):
 	_thread(msg._thread),
 	_pid(msg._pid),
 	_file(msg._file),
-	_line(msg._line)
+	_line(msg._line),
+	_fmt_str(msg._fmt_str),
+	_fmt_str_args(msg._fmt_str_args)
 {
-	if (msg._pMap)
-		_pMap = new StringMap(*msg._pMap);
-	else
-		_pMap = 0;
 }
 
 
@@ -91,26 +107,19 @@ Message::Message(const Message& msg, const std::string& text):
 	_thread(msg._thread),
 	_pid(msg._pid),
 	_file(msg._file),
-	_line(msg._line)
+	_line(msg._line),
+	_fmt_str(msg._fmt_str),
+	_fmt_str_args(msg._fmt_str_args)
 {
-	if (msg._pMap)
-		_pMap = new StringMap(*msg._pMap);
-	else
-		_pMap = 0;
 }
 
 
-Message::~Message()
-{
-	delete _pMap;
-}
+Message::~Message() = default;
 
 
 void Message::init()
 {
-#if !defined(POCO_VXWORKS)
 	_pid = Process::id();
-#endif
 	Thread* pThread = Thread::current();
 	if (pThread)
 	{
@@ -143,7 +152,8 @@ void Message::swap(Message& msg)
 	swap(_pid, msg._pid);
 	swap(_file, msg._file);
 	swap(_line, msg._line);
-	swap(_pMap, msg._pMap);
+	swap(_fmt_str, msg._fmt_str);
+	swap(_fmt_str_args, msg._fmt_str_args);
 }
 
 
@@ -156,6 +166,12 @@ void Message::setSource(const std::string& src)
 void Message::setText(const std::string& text)
 {
 	_text = text;
+}
+
+
+void Message::appendText(const std::string & text)
+{
+    _text.append(text);
 }
 
 
@@ -200,67 +216,32 @@ void Message::setSourceLine(int line)
 	_line = line;
 }
 
-
-bool Message::has(const std::string& param) const
+std::string_view Message::getFormatString() const
 {
-	return _pMap && (_pMap->find(param) != _pMap->end());
+    return _fmt_str;
+}
+
+void Message::setFormatString(std::string_view fmt_str)
+{
+    _fmt_str = fmt_str;
 }
 
 
-const std::string& Message::get(const std::string& param) const
+const std::vector<std::string>& Message::getFormatStringArgs() const
 {
-	if (_pMap)
-	{
-		StringMap::const_iterator it = _pMap->find(param);
-		if (it != _pMap->end())
-	 		return it->second;
-	}
-
-	throw NotFoundException();
+    return _fmt_str_args;
 }
 
-
-const std::string& Message::get(const std::string& param, const std::string& defaultValue) const
+void Message::setFormatStringArgs(const std::vector<std::string>& fmt_str_args)
 {
-	if (_pMap)
-	{
-		StringMap::const_iterator it = _pMap->find(param);
-		if (it != _pMap->end())
-	 		return it->second;
-	}
-
-	return defaultValue;
+    _fmt_str_args = fmt_str_args;
 }
 
-
-void Message::set(const std::string& param, const std::string& value)
+long Message::getPid() const
 {
-	if (!_pMap)
-		_pMap = new StringMap;
-
-	std::pair<StringMap::iterator, bool> result =
-		_pMap->insert(std::make_pair(param, value));
-	if (!result.second)
-	{
-		result.first->second = value;
-	}
-}
-
-
-const std::string& Message::operator [] (const std::string& param) const
-{
-	if (_pMap)
-		return (*_pMap)[param];
-	else
-		throw NotFoundException();
-}
-
-
-std::string& Message::operator [] (const std::string& param)
-{
-	if (!_pMap)
-		_pMap = new StringMap;
-	return (*_pMap)[param];
+	if (_pid < 0)
+		_pid = Process::id();
+	return _pid;
 }
 
 

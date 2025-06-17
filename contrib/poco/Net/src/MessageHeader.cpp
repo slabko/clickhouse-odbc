@@ -28,14 +28,18 @@ namespace Net {
 
 
 MessageHeader::MessageHeader():
-	_fieldLimit(DFL_FIELD_LIMIT)
+	_fieldLimit(DFL_FIELD_LIMIT),
+	_nameLengthLimit(DFL_NAME_LENGTH_LIMIT),
+	_valueLengthLimit(DFL_VALUE_LENGTH_LIMIT)
 {
 }
 
 
 MessageHeader::MessageHeader(const MessageHeader& messageHeader):
 	NameValueCollection(messageHeader),
-	_fieldLimit(DFL_FIELD_LIMIT)
+	_fieldLimit(DFL_FIELD_LIMIT),
+	_nameLengthLimit(DFL_NAME_LENGTH_LIMIT),
+	_valueLengthLimit(DFL_VALUE_LENGTH_LIMIT)
 {
 }
 
@@ -80,12 +84,12 @@ void MessageHeader::read(std::istream& istr)
 			throw MessageException("Too many header fields");
 		name.clear();
 		value.clear();
-		while (ch != eof && ch != ':' && ch != '\n' && name.length() < MAX_NAME_LENGTH) { name += ch; ch = buf.sbumpc(); }
+		while (ch != eof && ch != ':' && ch != '\n' && name.length() < _nameLengthLimit) { name += ch; ch = buf.sbumpc(); }
 		if (ch == '\n') { ch = buf.sbumpc(); continue; } // ignore invalid header lines
 		if (ch != ':') throw MessageException("Field name too long/no colon found");
 		if (ch != eof) ch = buf.sbumpc(); // ':'
 		while (ch != eof && Poco::Ascii::isSpace(ch) && ch != '\r' && ch != '\n') ch = buf.sbumpc();
-		while (ch != eof && ch != '\r' && ch != '\n' && value.length() < MAX_VALUE_LENGTH) { value += ch; ch = buf.sbumpc(); }
+		while (ch != eof && ch != '\r' && ch != '\n' && value.length() < _valueLengthLimit) { value += ch; ch = buf.sbumpc(); }
 		if (ch == '\r') ch = buf.sbumpc();
 		if (ch == '\n')
 			ch = buf.sbumpc();
@@ -93,7 +97,7 @@ void MessageHeader::read(std::istream& istr)
 			throw MessageException("Field value too long/no CRLF found");
 		while (ch == ' ' || ch == '\t') // folding
 		{
-			while (ch != eof && ch != '\r' && ch != '\n' && value.length() < MAX_VALUE_LENGTH) { value += ch; ch = buf.sbumpc(); }
+			while (ch != eof && ch != '\r' && ch != '\n' && value.length() < _valueLengthLimit) { value += ch; ch = buf.sbumpc(); }
 			if (ch == '\r') ch = buf.sbumpc();
 			if (ch == '\n')
 				ch = buf.sbumpc();
@@ -119,6 +123,32 @@ void MessageHeader::setFieldLimit(int limit)
 	poco_assert (limit >= 0);
 	
 	_fieldLimit = limit;
+}
+
+
+int MessageHeader::getNameLengthLimit() const
+{
+	return _nameLengthLimit;
+}
+
+void MessageHeader::setNameLengthLimit(int limit)
+{
+	poco_assert(limit >= 0);
+
+	_nameLengthLimit = limit;
+}
+
+
+int MessageHeader::getValueLengthLimit() const
+{
+	return _valueLengthLimit;
+}
+
+void MessageHeader::setValueLengthLimit(int limit)
+{
+	poco_assert(limit >= 0);
+
+	_valueLengthLimit = limit;
 }
 
 
@@ -286,7 +316,7 @@ void MessageHeader::decodeRFC2047(const std::string& ins, std::string& outs, con
 				continue;
 			}
 
-			// FIXME: check that we have enought chars-
+			// FIXME: check that we have enough chars-
 			if (c == '=') 
 			{
 				// The next two chars are hex representation of the complete byte.
@@ -322,13 +352,13 @@ void MessageHeader::decodeRFC2047(const std::string& ins, std::string& outs, con
 		}
 		catch (...) 
 		{
-			// FIXME: Unsuported encoding...
+			// FIXME: Unsupported encoding...
 			outs = tempout;
 		}
 	}
 	else 
 	{
-		// Not conversion necesary.
+		// Not conversion necessary.
 		outs = tempout;
 	}
 }
@@ -339,7 +369,7 @@ std::string MessageHeader::decodeWord(const std::string& text, const std::string
 	std::string outs, tmp = text;
 	do {
 		std::string tmp2;
-		// find the begining of the next rfc2047 chunk 
+		// find the beginning of the next rfc2047 chunk 
 		size_t pos = tmp.find("=?");
 		if (pos == std::string::npos) {
 			// No more found, return
@@ -347,7 +377,7 @@ std::string MessageHeader::decodeWord(const std::string& text, const std::string
 			break;
 		}
 
-		// check if there are standar text before the rfc2047 chunk, and if so, copy it.
+		// check if there are standard text before the rfc2047 chunk, and if so, copy it.
 		if (pos > 0) {
 			outs += tmp.substr(0, pos);
 		}
